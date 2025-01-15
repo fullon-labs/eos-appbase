@@ -47,14 +47,15 @@ if("${VERSION_STRING}" STREQUAL "")
   if(EXISTS ${CMAKE_SOURCE_DIR}/.git AND GIT_FOUND)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/version.cmake @ONLY)
     add_custom_target(appbase_version ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/version.cmake BYPRODUCTS version.cpp)
-    add_dependencies(appbase appbase_version)
     set(VERSION_PROCESSED true)
   endif()
 endif()
-if(!VERSION_PROCESSED)
+
+if(NOT VERSION_PROCESSED)
   if("${VERSION_STRING}" STREQUAL "")
     set(VERSION_STRING "Unknown")
   endif()
+
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/version.cpp @ONLY ESCAPE_QUOTES)
 endif()
 
@@ -63,6 +64,10 @@ add_library( appbase
              ${CMAKE_CURRENT_BINARY_DIR}/version.cpp
              ${HEADERS}
            )
+
+if (VERSION_PROCESSED)
+  add_dependencies(appbase appbase_version)
+endif()
 
 target_link_libraries( appbase Boost::program_options Boost::filesystem Threads::Threads)
 
