@@ -42,9 +42,25 @@ if(ENABLE_COVERAGE_TESTING)
     SET(CMAKE_CXX_FLAGS "--coverage ${CMAKE_CXX_FLAGS}")
 endif()
 
+if("${VERSION_STRING}" STREQUAL "")
+  find_package(Git)
+  if(EXISTS ${CMAKE_SOURCE_DIR}/.git AND GIT_FOUND)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/version.cmake @ONLY)
+    add_custom_target(appbase_version ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/version.cmake BYPRODUCTS version.cpp)
+    add_dependencies(appbase appbase_version)
+    set(VERSION_PROCESSED true)
+  endif()
+endif()
+if(!VERSION_PROCESSED)
+  if("${VERSION_STRING}" STREQUAL "")
+    set(VERSION_STRING "Unknown")
+  endif()
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/version.cpp @ONLY ESCAPE_QUOTES)
+endif()
+
 add_library( appbase
              application.cpp
-             version.cpp
+             ${CMAKE_CURRENT_BINARY_DIR}/version.cpp
              ${HEADERS}
            )
 
@@ -54,16 +70,6 @@ target_include_directories( appbase
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 set_target_properties( appbase PROPERTIES PUBLIC_HEADER "${HEADERS}" )
-
-find_package(Git)
-if(EXISTS ${CMAKE_SOURCE_DIR}/.git AND GIT_FOUND)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/version.cmake @ONLY)
-  add_custom_target(appbase_version ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/version.cmake BYPRODUCTS version.cpp)
-  add_dependencies(appbase appbase_version)
-else()
-  set(VERSION_STRING "Unknown")
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/version.cpp @ONLY ESCAPE_QUOTES)
-endif()
 
 set(CPACK_PACKAGING_INSTALL_PREFIX /)
 
